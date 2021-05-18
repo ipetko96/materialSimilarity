@@ -1,0 +1,16 @@
+{
+  "name": "materialsimilarity",
+  "version": "1.0.0",
+  "description": "Compare each row and find similiar materials.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ipetko",
+  "license": "ISC",
+  "dependencies": {
+    "fast-csv": "^4.3.6",
+    "fuzzball": "^1.4.0",
+    "node-xlsx": "^0.16.1"
+  }
+}
