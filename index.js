@@ -2,6 +2,7 @@ const xlsx = require("node-xlsx");
 const fuzz = require("fuzzball");
 const fs = require("fs");
 const { format } = require("@fast-csv/format");
+const { performance } = require("perf_hooks");
 
 // === VSTUPNE PARAMETRE ===
 
@@ -22,7 +23,8 @@ const stream = format({ headers: true });
 stream.pipe(podobnostWS);
 
 let uniqueMaterials = new Set();
-
+console.log("=== PROGRAM STARTED ===\n!! DO NOT CLOSE THIS TERMINAL !!\nIT WILL TELL YOU WHEN IT IS DONE.");
+const start = performance.now();
 for (let kazdy = 1; kazdy < workSheetsFromFile[sheetNumber - 1].data.length; kazdy++) {
   if (!workSheetsFromFile[sheetNumber - 1].data[kazdy][columnNumber - 1]) {
     continue;
@@ -45,5 +47,15 @@ for (let kazdy = 1; kazdy < workSheetsFromFile[sheetNumber - 1].data.length; kaz
     }
   }
 }
+const end = performance.now();
+const inMs = end - start;
+console.log(`!! DONE !! in ${msToMinAndSec(inMs)}s`);
+
 stream.end();
 fs.writeFileSync("unique.json", JSON.stringify([...uniqueMaterials]));
+
+function msToMinAndSec(ms) {
+  var minutes = Math.floor(ms / 60000);
+  var seconds = ((ms % 60000) / 1000).toFixed(0);
+  return seconds == 60 ? minutes + 1 + ":00" : minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+}
