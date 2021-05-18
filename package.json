@@ -4,7 +4,8 @@
   "description": "Compare each row and find similiar materials.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "author": "ipetko",
   "license": "ISC",
