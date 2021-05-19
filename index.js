@@ -3,27 +3,38 @@ const fuzz = require("fuzzball");
 const fs = require("fs");
 const { format } = require("@fast-csv/format");
 const { performance } = require("perf_hooks");
+const cliProgress = require("cli-progress");
 
 // === VSTUPNE PARAMETRE ===
 
 // cesta k suboru
-const workSheetsFromFile = xlsx.parse("Materials_MPN.xlsx");
+const workSheetsFromFile = xlsx.parse("ipet-test-data.xlsx");
 // slova ktore budu ignorovane (oddelene ciarkou)
 let nehladat = [];
 // cislo sheetu
 let sheetNumber = 1;
 // cislo stlpca
-let columnNumber = 3;
+let columnNumber = 1;
 // koeficient podobnosti
-let fuzzRatio = 80;
+let fuzzRatio = 90;
 // =========================
 
-const podobnostWS = fs.createWriteStream("podobnost.csv");
+if (!fs.existsSync("output")) {
+  fs.mkdir("output", (err) => {
+    if (err) throw err;
+  });
+}
+
+const podobnostWS = fs.createWriteStream(`output/podobnost_${fuzzRatio}.csv`);
 const stream = format({ headers: true });
 stream.pipe(podobnostWS);
-
 let uniqueMaterials = new Set();
-console.log("=== PROGRAM STARTED ===\n!! DO NOT CLOSE THIS TERMINAL !!\nIT WILL TELL YOU WHEN IT IS DONE.");
+
+// progress bar and info
+const bar1 = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+console.log("=== PROGRAM STARTED ===\n!! DO NOT CLOSE THIS TERMINAL !!\nIT WILL TELL YOU WHEN IT IS DONE.\nComputing...");
+bar1.start(workSheetsFromFile[sheetNumber - 1].data.length, 0);
+
 const start = performance.now();
 for (let kazdy = 1; kazdy < workSheetsFromFile[sheetNumber - 1].data.length; kazdy++) {
   if (!workSheetsFromFile[sheetNumber - 1].data[kazdy][columnNumber - 1]) {
@@ -41,18 +52,20 @@ for (let kazdy = 1; kazdy < workSheetsFromFile[sheetNumber - 1].data.length; kaz
     }
     let podobnost = fuzz.ratio(fromExcelKazdy, fromExcelKazdym, { full_process: false });
     if (podobnost >= fuzzRatio) {
-      let podobneMPN = { MPN: fromExcelKazdy, "z riadku": kazdy + 1, "zhoda na": podobnost, s: fromExcelKazdym, "na riadku": kazdym + 1 };
+      let podobneMPN = { MPN: fromExcelKazdy, material: workSheetsFromFile[sheetNumber - 1].data[kazdy][2], "z riadku": kazdy + 1, "zhoda na": podobnost, s: fromExcelKazdym, materialom: workSheetsFromFile[sheetNumber - 1].data[kazdym][2], "na riadku": kazdym + 1 };
       uniqueMaterials.add(fromExcelKazdym);
       stream.write(podobneMPN);
     }
   }
+  bar1.update(kazdy);
 }
+bar1.stop();
 const end = performance.now();
 const inMs = end - start;
 console.log(`!! DONE !! in ${msToMinAndSec(inMs)}s`);
 
 stream.end();
-fs.writeFileSync("unique.json", JSON.stringify([...uniqueMaterials]));
+fs.writeFileSync("output/unique.json", JSON.stringify([...uniqueMaterials]));
 
 function msToMinAndSec(ms) {
   var minutes = Math.floor(ms / 60000);
