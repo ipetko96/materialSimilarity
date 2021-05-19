@@ -13,10 +13,12 @@ const workSheetsFromFile = xlsx.parse("ipet-test-data.xlsx");
 let nehladat = [];
 // cislo sheetu
 let sheetNumber = 1;
-// cislo stlpca
-let columnNumber = 1;
+// cislo stlpca s MPN
+let columnNumberMPN = 1;
+// cislo stlpca s Material
+let columnNumberMaterial = 3;
 // koeficient podobnosti
-let fuzzRatio = 90;
+let fuzzRatio = 80;
 // =========================
 
 if (!fs.existsSync("output")) {
@@ -37,22 +39,30 @@ bar1.start(workSheetsFromFile[sheetNumber - 1].data.length, 0);
 
 const start = performance.now();
 for (let kazdy = 1; kazdy < workSheetsFromFile[sheetNumber - 1].data.length; kazdy++) {
-  if (!workSheetsFromFile[sheetNumber - 1].data[kazdy][columnNumber - 1]) {
+  if (!workSheetsFromFile[sheetNumber - 1].data[kazdy][columnNumberMPN - 1]) {
     continue;
   }
-  const fromExcelKazdy = workSheetsFromFile[sheetNumber - 1].data[kazdy][columnNumber - 1].toString();
+  const fromExcelKazdy = workSheetsFromFile[sheetNumber - 1].data[kazdy][columnNumberMPN - 1].toString();
   if (nehladat.includes(fromExcelKazdy) || !/\S/.test(fromExcelKazdy) || uniqueMaterials.has(fromExcelKazdy)) {
     continue;
   }
   uniqueMaterials.add(fromExcelKazdy);
   for (let kazdym = 1; kazdym < workSheetsFromFile[sheetNumber - 1].data.length; kazdym++) {
-    const fromExcelKazdym = workSheetsFromFile[sheetNumber - 1].data[kazdym][columnNumber - 1].toString();
+    const fromExcelKazdym = workSheetsFromFile[sheetNumber - 1].data[kazdym][columnNumberMPN - 1].toString();
     if (kazdy == kazdym) {
       continue;
     }
     let podobnost = fuzz.ratio(fromExcelKazdy, fromExcelKazdym, { full_process: false });
     if (podobnost >= fuzzRatio) {
-      let podobneMPN = { MPN: fromExcelKazdy, material: workSheetsFromFile[sheetNumber - 1].data[kazdy][2], "z riadku": kazdy + 1, "zhoda na": podobnost, s: fromExcelKazdym, materialom: workSheetsFromFile[sheetNumber - 1].data[kazdym][2], "na riadku": kazdym + 1 };
+      let podobneMPN = {
+        MPN: fromExcelKazdy,
+        material: workSheetsFromFile[sheetNumber - 1].data[kazdy][columnNumberMaterial - 1],
+        "z riadku": kazdy + 1,
+        "zhoda na": podobnost,
+        s: fromExcelKazdym,
+        materialom: workSheetsFromFile[sheetNumber - 1].data[kazdym][columnNumberMaterial - 1],
+        "na riadku": kazdym + 1,
+      };
       uniqueMaterials.add(fromExcelKazdym);
       stream.write(podobneMPN);
     }
